@@ -12,6 +12,11 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+  next();
+});
+
 // Jalur dasar untuk cek koneksi awal
 app.get('/', (req, res) => {
   res.json({ pesan: 'Mesin API Pengingat Servis Motor berhasil menyala!' });
@@ -68,11 +73,11 @@ app.post('/api/auth/login', async (req, res) => {
 // 1. CREATE: Menambah Jadwal Servis Baru
 app.post('/api/servis', verifikasiToken, async (req, res) => {
   try {
-    const { nama_motor, plat_nomor, jenis_servis, tanggal_servis, tanggal_berikutnya, status } = req.body;
+    const { nama_motor, plat_nomor, jenis_servis, harga, tanggal_servis, tanggal_berikutnya, status } = req.body;
     const userId = req.pengguna.id; // Diambil otomatis dari token login
 
-    const queryInput = 'INSERT INTO servis_motor (user_id, nama_motor, plat_nomor, jenis_servis, tanggal_servis, tanggal_berikutnya, status) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    await db.query(queryInput, [userId, nama_motor, plat_nomor, jenis_servis, tanggal_servis, tanggal_berikutnya, status]);
+    const queryInput = 'INSERT INTO servis_motor (user_id, nama_motor, plat_nomor, jenis_servis, harga, tanggal_servis, tanggal_berikutnya, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    await db.query(queryInput, [userId, nama_motor, plat_nomor, jenis_servis, harga || 0, tanggal_servis, tanggal_berikutnya, status]);
 
     res.status(201).json({ pesan: 'Jadwal servis motor berhasil ditambahkan!' });
   } catch (error) {
@@ -97,10 +102,10 @@ app.put('/api/servis/:id', verifikasiToken, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.pengguna.id;
-    const { nama_motor, plat_nomor, jenis_servis, tanggal_servis, tanggal_berikutnya, status } = req.body;
+    const { nama_motor, plat_nomor, jenis_servis, harga, tanggal_servis, tanggal_berikutnya, status } = req.body;
 
-    const queryUpdate = 'UPDATE servis_motor SET nama_motor = ?, plat_nomor = ?, jenis_servis = ?, tanggal_servis = ?, tanggal_berikutnya = ?, status = ? WHERE id = ? AND user_id = ?';
-    const [hasil] = await db.query(queryUpdate, [nama_motor, plat_nomor, jenis_servis, tanggal_servis, tanggal_berikutnya, status, id, userId]);
+    const queryUpdate = 'UPDATE servis_motor SET nama_motor = ?, plat_nomor = ?, jenis_servis = ?, harga = ?, tanggal_servis = ?, tanggal_berikutnya = ?, status = ? WHERE id = ? AND user_id = ?';
+    const [hasil] = await db.query(queryUpdate, [nama_motor, plat_nomor, jenis_servis, harga || 0, tanggal_servis, tanggal_berikutnya, status, id, userId]);
 
     if (hasil.affectedRows === 0) {
       return res.status(404).json({ pesan: 'Data tidak ditemukan atau kamu tidak memiliki akses!' });
